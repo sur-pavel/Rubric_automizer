@@ -81,10 +81,10 @@ namespace Rubric_automizer
 
         private static void SaveRubricsToSql()
         {
-            foreach (SubtitleObj subtitleObj in excelHandler.GetSubtitlesObjs())
-            //foreach (SubtitleObj subtitleObj in irbisHandler.GetSubtitlesObjs(sqlHandler))
+            //foreach (SubtitleObj subtitleObj in excelHandler.GetSubtitlesObjs())
+            foreach (SubtitleObj subtitleObj in irbisHandler.GetSubtitlesObjs(sqlHandler))
             {
-                sqlHandler.InsertDataDB("doc_subtitles", subtitleObj);
+                //sqlHandler.InsertDataDB("doc_subtitles", subtitleObj);
             }
         }
 

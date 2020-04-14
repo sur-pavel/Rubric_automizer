@@ -8,20 +8,18 @@ namespace Rubric_automizer
     {
         private const string CONNECTION_PARAMETERS = "Host = localhost; Username = postgres; Password = s$cret; Database = irbis_db";
         private NpgsqlConnection connection;
-        private NpgsqlCommand command;
 
         public SqlHandler()
         {
             connection = new NpgsqlConnection(CONNECTION_PARAMETERS);
             connection.Open();
 
-            var sql = "SELECT version()";
-
-            command = new NpgsqlCommand(sql, connection);
-
-            var version = command.ExecuteScalar().ToString();
-            Console.WriteLine($"PostgreSQL version: {version}");
-            command.ExecuteNonQuery();
+            using (NpgsqlCommand command = new NpgsqlCommand("SELECT version()", connection))
+            {
+                var version = command.ExecuteScalar().ToString();
+                Console.WriteLine($"PostgreSQL version: {version}");
+                command.ExecuteNonQuery();
+            }
         }
 
         internal void DisConnect()
@@ -30,9 +28,12 @@ namespace Rubric_automizer
         }
 
         internal void DeleteDataFromDocsDB()
+
         {
-            command.CommandText = "DELETE FROM doc_subtitles;";
-            command.ExecuteNonQuery();
+            using (NpgsqlCommand command = new NpgsqlCommand("DELETE FROM doc_subtitles;", connection))
+            {
+                command.ExecuteNonQuery();
+            }
         }
 
         internal void InsertDataDB(string tableName, SubtitleObj subtitleObj)
@@ -44,8 +45,11 @@ namespace Rubric_automizer
             Console.WriteLine(builder.ToString());
             try
             {
-                command.CommandText = builder.ToString();
-                command.ExecuteNonQuery();
+                using (NpgsqlCommand command = new NpgsqlCommand(builder.ToString(), connection))
+                {
+                    command.CommandText = builder.ToString();
+                    command.ExecuteNonQuery();
+                }
             }
             catch (System.Exception ex)
             {
@@ -62,8 +66,11 @@ namespace Rubric_automizer
             Console.WriteLine(builder.ToString());
             try
             {
-                command.CommandText = builder.ToString();
-                command.ExecuteNonQuery();
+                using (NpgsqlCommand command = new NpgsqlCommand(builder.ToString(), connection))
+                {
+                    command.CommandText = builder.ToString();
+                    command.ExecuteNonQuery();
+                }
             }
             catch (System.Exception ex)
             {
@@ -79,16 +86,21 @@ namespace Rubric_automizer
 
         internal string GetIndexMDA(string title)
         {
-            string index_MDA;
+            string index_MDA = "";
             var builder = new StringBuilder();
             builder.AppendFormat(@"SELECT index_MDA FROM doc_subtitles WHERE title = '{0}'", title);
             Console.WriteLine(builder.ToString());
             try
+
             {
-                command.CommandText = builder.ToString();
-                Int64 count = (Int64)command.ExecuteNonQuery();
-                index_MDA = count.ToString();
-                Console.WriteLine("Полученный индекс МДА: " + index_MDA);
+                using (NpgsqlCommand command = new NpgsqlCommand(builder.ToString(), connection))
+                using (NpgsqlDataReader reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        index_MDA = reader.GetString(0);
+                    }
+                }
             }
             catch (System.Exception ex)
             {

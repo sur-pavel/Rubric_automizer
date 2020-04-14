@@ -16,7 +16,7 @@ namespace Rubric_automizer
                 client.ParseConnectionString("host=127.0.0.1;port=8888; user=СПА;password=1;");
                 client.Connect();
                 client.PushDatabase("MPDA");
-                Console.WriteLine("Connected to irbis_server successfully");
+                Console.WriteLine("Connected to irbis_server successfully\n");
             }
             catch (Exception ex)
             {
@@ -46,10 +46,9 @@ namespace Rubric_automizer
             foreach (RecordField field606 in record.Fields.GetField("606"))
             {
                 string fieldText = field606.ToSortedText();
-                Console.WriteLine("Field text = " + fieldText);
                 string index_MDA = sqlHandler.GetIndexMDA(fieldText.Split('^')[1].Substring(1));
                 SubtitleObj subtitleObj = new SubtitleObj(index_MDA, GetSubtitle(fieldText, 1), GetSubtitle(fieldText, 2));
-                Console.WriteLine("ИНДЕКС МДА: " + index_MDA + " ЗАГОЛОВОК: " + subtitleObj.Title + " ПОДЗАГОЛОВОК: " + subtitleObj.Subtitle);
+                Console.WriteLine("ИНДЕКС МДА: " + index_MDA + " ЗАГОЛОВОК: " + subtitleObj.Title + " ПОДЗАГОЛОВОК: " + subtitleObj.Subtitle + "\n");
                 subtitlesObjs.Add(subtitleObj);
             }
             //}
@@ -86,8 +85,6 @@ namespace Rubric_automizer
                 else
                 {
                     length = fieldText.Split('^').Length;
-                    Console.WriteLine(fieldText.Split('^')[1].Substring(1));
-
                     if (inc < length)
                     {
                         subtitle = fieldText.Split('^')[length - inc].Substring(1);
