@@ -1,5 +1,6 @@
 ﻿using ManagedClient;
 using System;
+using System.Collections.Generic;
 
 namespace Rubric_automizer
 {
@@ -35,15 +36,65 @@ namespace Rubric_automizer
             }
         }
 
-        internal int GetMaxMfn()
+        internal List<SubtitleObj> GetSubtitlesObjs(SqlHandler sqlHandler)
         {
-            return client.GetMaxMfn();
+            List<SubtitleObj> subtitlesObjs = new List<SubtitleObj>();
+            //for (int mfn = 1; mfn <= client.GetMaxMfn(); mfn++)
+            //{
+            IrbisRecord record = client.ReadRecord(17890);
+
+            foreach (RecordField field606 in record.Fields.GetField("606"))
+            {
+                string fieldText = field606.ToSortedText();
+                Console.WriteLine("Field text = " + fieldText);
+                string index_MDA = sqlHandler.GetIndexMDA(fieldText.Split('^')[1].Substring(1));
+                SubtitleObj subtitleObj = new SubtitleObj(index_MDA, GetSubtitle(fieldText, 1), GetSubtitle(fieldText, 2));
+                Console.WriteLine("ИНДЕКС МДА: " + index_MDA + " ЗАГОЛОВОК: " + subtitleObj.Title + " ПОДЗАГОЛОВОК: " + subtitleObj.Subtitle);
+                subtitlesObjs.Add(subtitleObj);
+            }
+            //}
+
+            return subtitlesObjs;
         }
 
-        internal ShortRecord GetShortRecord(int mfn)
+        private string GetSubtitle(string fieldText, int inc)
         {
-            ShortRecord shortRecord = new ShortRecord();
-            return shortRecord;
+            string subtitle = "";
+            if (!String.IsNullOrEmpty(fieldText) && !String.IsNullOrWhiteSpace(fieldText))
+            {
+                int length;
+                if (fieldText.Contains(" ; "))
+                {
+                    length = fieldText.Split(new string[] { " ; " }, StringSplitOptions.None).Length;
+                    if (inc > 1)
+                    {
+                        if (length > 2)
+                        {
+                            subtitle = fieldText.Split(new string[] { " ; " }, StringSplitOptions.None)[length - inc].Substring(1);
+                        }
+                        else
+                        {
+                            length = fieldText.Split('^').Length;
+                            subtitle = fieldText.Split('^')[length - 1].Substring(1);
+                        }
+                    }
+                    else
+                    {
+                        subtitle = fieldText.Split(new string[] { " ; " }, StringSplitOptions.None)[length - inc].Substring(1);
+                    }
+                }
+                else
+                {
+                    length = fieldText.Split('^').Length;
+                    Console.WriteLine(fieldText.Split('^')[1].Substring(1));
+
+                    if (inc < length)
+                    {
+                        subtitle = fieldText.Split('^')[length - inc].Substring(1);
+                    }
+                }
+            }
+            return subtitle;
         }
     }
 }

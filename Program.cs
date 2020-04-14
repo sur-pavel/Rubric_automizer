@@ -1,8 +1,8 @@
-﻿using DocumentFormat.OpenXml.Office2010.ExcelAc;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Rubric_automizer
@@ -39,8 +39,11 @@ namespace Rubric_automizer
                 case CtrlType.CTRL_SHUTDOWN_EVENT:
                 case CtrlType.CTRL_CLOSE_EVENT:
                 default:
-                    ExitDBs();
-                    Environment.Exit(-1);
+                    CancellationTokenSource tokenSource = new CancellationTokenSource();
+                    CancellationToken cancellationToken = tokenSource.Token;
+                    Task.Factory.StartNew(() => ExitDBs());
+                    Task.WaitAll();
+                    Environment.Exit(0);
                     return false;
             }
         }
@@ -49,13 +52,13 @@ namespace Rubric_automizer
         {
             _handler += new EventHandler(Handler);
             SetConsoleCtrlHandler(_handler, true);
-            Console.WriteLine("App started");
+            Console.WriteLine("Application started");
             sqlHandler = new SqlHandler();
             irbisHandler = new IrbisHandler();
             excelHandler = new ExcelHandler();
             spellChecker = new SpellChecker();
 
-            SaveRecordsToSQL();
+            SaveRubricsToSql();
             try
             {
                 ExitDBs();
@@ -70,30 +73,18 @@ namespace Rubric_automizer
         private static void ExitDBs()
         {
             irbisHandler.Disconnect();
+            Console.WriteLine("Irbis disconnected");
             sqlHandler.DisConnect();
+            Console.WriteLine("Postgresql disconnected");
             Console.ReadKey();
         }
 
-        private static void SaveDocRubricsToSql()
+        private static void SaveRubricsToSql()
         {
-            //sqlHandler.DeleteDataFromDocsDB();
-            foreach (var subtitleObj in excelHandler.GetSubtitlesObjs())
+            foreach (SubtitleObj subtitleObj in excelHandler.GetSubtitlesObjs())
+            //foreach (SubtitleObj subtitleObj in irbisHandler.GetSubtitlesObjs(sqlHandler))
             {
-                if (excelHandler.exit == true)
-                {
-                    ExitDBs();
-                    Environment.Exit(-1);
-                }
                 sqlHandler.InsertDataDB("doc_subtitles", subtitleObj);
-            }
-        }
-
-        private static void SaveRecordsToSQL()
-        {
-            List<ShortRecord> shortRecords = new List<ShortRecord>();
-            for (int mfn = 1; mfn <= irbisHandler.GetMaxMfn(); mfn++)
-            {
-                shortRecords.Add(irbisHandler.GetShortRecord(mfn));
             }
         }
 
