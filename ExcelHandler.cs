@@ -8,7 +8,6 @@ namespace Rubric_automizer
     {
         private const string EXCEL_FILE_PATH = @"c:\Users\sur-p\Downloads\Default_Rubrics.xlsx";
         internal List<SubtitleObj> subtitlesObjs;
-        internal bool exit = false;
 
         internal List<SubtitleObj> GetSubtitlesObjs()
         {
@@ -61,10 +60,14 @@ namespace Rubric_automizer
                         int splitLength = text.Split('|').Length;
                         firstTitle = text.Split('|')[splitLength - 1];
                         index_MDA = text.Split('|')[1];
-                        Console.WriteLine("\n\nдобавлен Предметный заголовок: " + index_MDA + " " + firstTitle);
-                        continue;
+                        Console.WriteLine("\n\nдобавлен Индекс: " + index_MDA + ", Предметный заголовок: " + firstTitle);
+                        title = firstTitle;
+                        subtitle = firstTitle;
                     }
-                    subtitle = text;
+                    else
+                    {
+                        subtitle = text;
+                    }
 
                     SubtitleObj subtitleObj = new SubtitleObj(index_MDA, title, subtitle);
                     Console.WriteLine("ИНДЕКС МДА: " + index_MDA + " ЗАГОЛОВОК: " + subtitleObj.Title + " ПОДЗАГОЛОВОК: " + subtitleObj.Subtitle);

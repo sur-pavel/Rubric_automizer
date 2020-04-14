@@ -1,5 +1,5 @@
-DROP TABLE IF EXISTS irbis_records, doc_subtitles, wrong_subtitles, doc_subtitles_wrong_subtitles
-CASCADE
+DROP TABLE IF EXISTS doc_subtitles
+CASCADE;
 
 CREATE TABLE doc_subtitles
 (
