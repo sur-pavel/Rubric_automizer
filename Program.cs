@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -16,6 +17,9 @@ namespace Rubric_automizer
 
         [DllImport("Kernel32")]
         private static extern bool SetConsoleCtrlHandler(EventHandler handler, bool add);
+
+        [DllImport("user32.dll")]
+        public static extern bool ShowWindow(System.IntPtr hWnd, int cmdShow);
 
         private delegate bool EventHandler(CtrlType sig);
 
@@ -52,13 +56,18 @@ namespace Rubric_automizer
         {
             _handler += new EventHandler(Handler);
             SetConsoleCtrlHandler(_handler, true);
-            Console.WriteLine("Application started");
-            sqlHandler = new SqlHandler();
-            irbisHandler = new IrbisHandler();
-            excelHandler = new ExcelHandler();
-            spellChecker = new SpellChecker();
 
-            SaveRubricsToSql();
+            Process p = Process.GetCurrentProcess();
+            ShowWindow(p.MainWindowHandle, 3);
+            Console.WriteLine("Application started");
+
+            sqlHandler = new SqlHandler();
+            excelHandler = new ExcelHandler();
+            spellChecker = new SpellChecker(sqlHandler);
+            irbisHandler = new IrbisHandler(spellChecker, sqlHandler);
+
+            SaveRubricsToSqlFromIrbis();
+
             try
             {
                 ExitDBs();
@@ -73,34 +82,26 @@ namespace Rubric_automizer
         private static void ExitDBs()
         {
             irbisHandler.Disconnect();
+
             Console.WriteLine("Irbis disconnected");
             sqlHandler.DisConnect();
             Console.WriteLine("Postgresql disconnected");
             Console.ReadKey();
         }
 
-        private static void SaveRubricsToSql()
+        private static void SaveRubricsToSqlFromIrbis()
         {
-            //foreach (SubtitleObj subtitleObj in excelHandler.GetSubtitlesObjs())
-            foreach (SubtitleObj subtitleObj in irbisHandler.GetSubtitlesObjs(sqlHandler))
+            foreach (SubtitleObj subtitleObj in irbisHandler.GetSubtitlesObjs())
             {
                 //sqlHandler.InsertDataDB("doc_subtitles", subtitleObj);
             }
         }
 
-        private static void CompareWithDocs(string rubricField)
+        private static void SaveRubricsToSqlFromExcel()
         {
-            int inc = 1;
-            string indexMDA = sqlHandler.GetIndexMDA(rubricField.Split('^')[0].Substring(1));
-            indexMDA = spellChecker.CleanupString(indexMDA);
-            string lastSubtitle = GetSubtitle(rubricField, inc);
-            string preLastSubtitle = GetSubtitle(rubricField, inc + 1);
-
-            while (spellChecker.CheckByMatch(lastSubtitle) && !sqlHandler.ExistInDB("doc_subtitles", "subtitle", lastSubtitle))
+            foreach (SubtitleObj subtitleObj in excelHandler.GetSubtitlesObjs())
             {
-                inc++;
-                lastSubtitle = GetSubtitle(rubricField, inc);
-                preLastSubtitle = GetSubtitle(rubricField, inc + 1);
+                sqlHandler.InsertDataDB("doc_subtitles", subtitleObj);
             }
         }
 
