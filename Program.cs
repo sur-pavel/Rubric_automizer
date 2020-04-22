@@ -66,6 +66,7 @@ namespace Rubric_automizer
             spellChecker = new SpellChecker(sqlHandler);
             irbisHandler = new IrbisHandler(spellChecker, sqlHandler);
 
+            //spellChecker.CreateDictionary();
             SaveRubricsToSqlFromIrbis();
 
             try
@@ -91,7 +92,6 @@ namespace Rubric_automizer
 
         private static void SaveRubricsToSqlFromIrbis()
         {
-            spellChecker.CreateDictionary();
             foreach (SubtitleObj subtitleObj in irbisHandler.GetSubtitlesObjs())
             {
                 //sqlHandler.InsertDataDB("doc_subtitles", subtitleObj);
