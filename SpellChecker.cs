@@ -24,6 +24,8 @@ namespace Rubric_automizer
         {
             Console.WriteLine("Creation of spellDictionary begins");
             string[] words = sqlHandler.GetAllSubtitles().Split(' ');
+            words = words.Where(val => val != "").ToArray();
+            words = words.Where(val => val != " ").ToArray();
 
             sqlHandler.CreateSpellDictionary(words);
 
