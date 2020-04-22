@@ -8,3 +8,12 @@ CREATE TABLE doc_subtitles
     title VARCHAR(200),
     subtitle VARCHAR(200)
 );
+
+DROP TABLE IF EXISTS spell_dictionary
+CASCADE;
+
+CREATE TABLE spell_dictionary
+(
+    word_id SERIAL PRIMARY KEY,	
+    word VARCHAR(200)
+);
