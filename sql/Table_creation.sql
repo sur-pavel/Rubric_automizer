@@ -35,3 +35,9 @@ CREATE TABLE doc_subtitles_wrong_subtitles
     FOREIGN KEY (doc_subtitle_id) REFERENCES doc_subtitles,
     FOREIGN KEY (wrong_subtitle_id) REFERENCES wrong_subtitles
 );
+
+CREATE TABLE spell_dictionary
+(
+    word_id SERIAL PRIMARY KEY,	
+    word VARCHAR(200)
+);
