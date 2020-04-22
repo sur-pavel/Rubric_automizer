@@ -47,18 +47,25 @@ namespace Rubric_automizer
         internal string CleanupStringsInSubObj(string title)
         {
             string wrongTitle = title;
-
-            foreach (string wrongWord in wrongTitle.Split(' '))
+            string rightTitle = sqlHandler.GetRightTitle(wrongTitle);
+            if (String.IsNullOrEmpty(rightTitle))
             {
-                if (!spellDictionary.Check(wrongWord))
+                foreach (string wrongWord in wrongTitle.Split(' '))
                 {
-                    List<string> suggestList = spellDictionary.Suggest(wrongWord).ToList();
-                    if (!suggestList.IsNullOrEmpty())
+                    if (!spellDictionary.Check(wrongWord))
                     {
-                        title = wrongTitle.Replace(wrongWord, ConsoleSuggestDialog(wrongWord, suggestList));
-                        sqlHandler.AddWrongTitle(wrongTitle, title);
-                    }
-                };
+                        List<string> suggestList = spellDictionary.Suggest(wrongWord).ToList();
+                        if (!suggestList.IsNullOrEmpty())
+                        {
+                            title = wrongTitle.Replace(wrongWord, ConsoleSuggestDialog(wrongWord, suggestList));
+                            sqlHandler.AddWrongTitle(wrongTitle, title);
+                        }
+                    };
+                }
+            }
+            else
+            {
+                title = rightTitle;
             }
 
             return title;
