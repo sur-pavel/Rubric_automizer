@@ -66,7 +66,9 @@ namespace Rubric_automizer
             spellChecker = new SpellChecker(sqlHandler);
             irbisHandler = new IrbisHandler(spellChecker, sqlHandler);
 
+            //SaveRubricsToSqlFromExcel();
             //spellChecker.CreateDictionary();
+
             SaveRubricsToSqlFromIrbis();
 
             try
