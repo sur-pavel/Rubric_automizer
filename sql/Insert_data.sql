@@ -22,8 +22,8 @@ VALUES
 INSERT INTO  doc_subtitles (title, subtitle)
 VALUES ('Заголовок', 'Подзаголовок') ON CONFLICT (subtitle) DO NOTHING;
 
-INSERT INTO wrong_subtitles (index_MDA, title, subtitle)
-VALUES ('Заголовок', 'Подзаголовок') ON CONFLICT (subtitle) DO NOTHING;
+INSERT INTO wrong_subtitles (subtitle)
+VALUES ('Катихизические поучения (заповеди о вере и благочестии и т.п.)') ON CONFLICT (subtitle) DO NOTHING;
 
 CREATE TABLE wrong_subtitles
 (
@@ -33,5 +33,5 @@ CREATE TABLE wrong_subtitles
     subtitle VARCHAR(200)
 );
 
-INSERT INTO wrong_subtitles_doc_subtitles (doc_subtitle_id, wrong_subtitle_id)
-VALUES (1, 1)
+INSERT INTO doc_subtitles_wrong_subtitles (doc_subtitle_id, wrong_subtitle_id)
+VALUES (391, 1)
