@@ -1,6 +1,7 @@
 ﻿using ManagedClient;
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace Rubric_automizer
 {
@@ -49,24 +50,29 @@ namespace Rubric_automizer
             {
                 if (mfn > 10) break;
                 IrbisRecord record = client.ReadRecord(mfn);
+                Console.WriteLine($"\nMFN: {mfn}");
 
                 foreach (RecordField field606 in record.Fields.GetField("606"))
                 {
                     string fieldText = field606.ToSortedText();
+                    fieldText = Regex.Replace(fieldText, @";\s([А-Я])\s; ", "");
                     fieldText = DeleteNotesOfBK(fieldText);
                     SubtitleObj subtitleObj = new SubtitleObj("", GetSubtitle(fieldText, 2), GetSubtitle(fieldText, 1));
                     try
                     {
-                        subtitleObj = spellChecker.CheckSubtitleObj(subtitleObj);
-                        if (subtitleObj.Title.Equals("ODD_SUB"))
-                        {
-                            subtitleObj.Index_MDA = sqlHandler.GetIndexMDA(subtitleObj.Subtitle);
-                        }
                         subtitleObj = sqlHandler.GetRightSubtitleObj(subtitleObj);
                     }
                     catch (InvalidCastException ex)
                     {
-                        Console.WriteLine($"\nMFN: {mfn}\n {ex.Message}");
+                        try
+                        {
+                            Console.WriteLine($"\nMFN: {mfn}\n {ex.Message}\nTry to check subtitles.\n");
+                            subtitleObj = spellChecker.CheckSubtitleObj(subtitleObj);
+                        }
+                        catch (InvalidCastException except)
+                        {
+                            Console.WriteLine($"\nMFN: {mfn}\n {except.Message}");
+                        }
                     }
                     subtitlesObjs.Add(subtitleObj);
                 }
