@@ -91,6 +91,7 @@ namespace Rubric_automizer
 
         private static void SaveRubricsToSqlFromIrbis()
         {
+            spellChecker.CreateDictionary();
             foreach (SubtitleObj subtitleObj in irbisHandler.GetSubtitlesObjs())
             {
                 //sqlHandler.InsertDataDB("doc_subtitles", subtitleObj);
@@ -101,7 +102,7 @@ namespace Rubric_automizer
         {
             foreach (SubtitleObj subtitleObj in excelHandler.GetSubtitlesObjs())
             {
-                sqlHandler.InsertDataDB("doc_subtitles", subtitleObj);
+                sqlHandler.InsertSubtitleObjDB("doc_subtitles", subtitleObj);
             }
         }
 
