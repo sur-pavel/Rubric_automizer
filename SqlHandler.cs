@@ -89,21 +89,10 @@ namespace Rubric_automizer
 
         internal void AddWrongTitle(string wrongTitle, string title)
         {
-            if (!String.IsNullOrEmpty(GetSubtitleID(title)))
+            string doc_subtitle_id = PerfromSelectQuery("doc_subtitle_id", "doc_subtitles", "title", title);
+            if (!String.IsNullOrEmpty(doc_subtitle_id))
             {
-                string insertQuery = $"INSERT INTO wrong_subtitles (subtitle) VALUES ('{wrongTitle}')";
-                try
-                {
-                    using (NpgsqlCommand command = new NpgsqlCommand(insertQuery, connection))
-                    {
-                        command.ExecuteNonQuery();
-                        Console.WriteLine(insertQuery);
-                    }
-                }
-                catch (PostgresException ex)
-                {
-                    Console.WriteLine(ex);
-                }
+                InsertDataIntoDB("wrong_subtitles", "subtitle", wrongTitle);
             }
         }
 
@@ -137,9 +126,9 @@ namespace Rubric_automizer
             }
         }
 
-        internal void InsertDataIntoDB(string tableName, string insertParam, string data)
+        internal void InsertDataIntoDB(string tableName, string insertParam, string value)
         {
-            string insertQuery = $"INSERT INTO {tableName} ({insertParam}) VALUES ('{data}')";
+            string insertQuery = $"INSERT INTO {tableName} ({insertParam}) VALUES ('{value}')";
 
             Console.WriteLine(insertQuery);
             try
@@ -193,11 +182,6 @@ namespace Rubric_automizer
         internal string GetIndexMDA(string subtitle)
         {
             return PerfromSelectQuery("index_MDA", "doc_subtitles", "subtitle", subtitle);
-        }
-
-        internal string GetSubtitleID(string title)
-        {
-            return PerfromSelectQuery("doc_subtitle_id", "doc_subtitles", "title", title);
         }
     }
 }
