@@ -13,45 +13,53 @@ namespace Rubric_automizer
 
     {
         private SqlHandler sqlHandler;
+        private WordList spellDictionary;
 
         public SpellChecker(SqlHandler sqlHandler)
         {
             this.sqlHandler = sqlHandler;
         }
 
+        internal void CreateDictionary()
+        {
+            Console.WriteLine("Creation of spellDictionary begins");
+            string[] words = sqlHandler.GetAllSubtitles().Split(' ');
+
+            sqlHandler.CreateSpellDictionary(words);
+
+            spellDictionary = WordList.CreateFromWords(words);
+            Console.WriteLine("Creation of spellDictionary ended\n");
+        }
+
         internal bool CheckByMatch(string subtitle)
         {
             bool negative = false;
             Match fullPersonName = Regex.Match(subtitle, @"_[\d]+[\,с]");
+
             if (fullPersonName.Success)
             {
             }
             return negative;
         }
 
-        internal string CleanupStringsInSubObj(string data)
+        internal string CleanupStringsInSubObj(string title)
         {
-            string str = data;
-            if (CheckByMatch(str))
+            string wrongTitle = title;
+
+            foreach (string wrongWord in wrongTitle.Split(' '))
             {
-                data = "ODD_SUB";
-            }
-            string[] words = sqlHandler.GetAllSubtitles().Split(' ');
-            WordList dictionary = WordList.CreateFromWords(words);
-            Console.WriteLine("Creation of dictionary ended\n");
-            foreach (string word in str.Split(' '))
-            {
-                if (!dictionary.Check(word))
+                if (!spellDictionary.Check(wrongWord))
                 {
-                    List<string> suggestList = dictionary.Suggest(word).ToList();
+                    List<string> suggestList = spellDictionary.Suggest(wrongWord).ToList();
                     if (!suggestList.IsNullOrEmpty())
                     {
-                        data = ConsoleSuggestDialog(word, suggestList);
+                        title = wrongTitle.Replace(wrongWord, ConsoleSuggestDialog(wrongWord, suggestList));
+                        sqlHandler.AddWrongTitle(wrongTitle, title);
                     }
                 };
             }
 
-            return data;
+            return title;
         }
 
         private string ConsoleSuggestDialog(string word, List<string> suggestList)
@@ -109,12 +117,6 @@ namespace Rubric_automizer
         {
             subtitleObj.Title = CleanupStringsInSubObj(subtitleObj.Title);
             subtitleObj.Subtitle = CleanupStringsInSubObj(subtitleObj.Subtitle);
-            if (subtitleObj.Subtitle.Equals("ODD_SUB"))
-            {
-                subtitleObj.Subtitle = subtitleObj.Title;
-                subtitleObj.Title = "ODD_SUB";
-            }
-
             return subtitleObj;
         }
     }
