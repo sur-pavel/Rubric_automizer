@@ -28,14 +28,6 @@ namespace Rubric_automizer
             connection.Close();
         }
 
-        internal void CreateSpellDictionary(string[] words)
-        {
-            foreach (string word in words)
-            {
-                InsertDataIntoDB("spell_dictionary", "word", word);
-            }
-        }
-
         internal string GetAllSubtitles()
         {
             StringBuilder builder = new StringBuilder();
@@ -48,7 +40,7 @@ namespace Rubric_automizer
                 {
                     while (reader.Read())
                     {
-                        string subtitle = Regex.Replace(reader[0].ToString(), @"[.,\/#!$%\^&\*;:{}=\-_`~()]", " ");
+                        string subtitle = Regex.Replace(reader[0].ToString(), @"[.,\/#!$%\^&\*;:{}=\-_`~–()]", " ");
                         subtitle = subtitle.Replace("  ", " ");
                         if (!String.IsNullOrEmpty(subtitle))
                         {
@@ -62,6 +54,34 @@ namespace Rubric_automizer
                 Console.WriteLine(ex);
             }
             return builder.ToString();
+        }
+
+        internal string GetRightTitle(string wrongTitle)
+        {
+            string rightTitle = "";
+            string selectQuery = $"SELECT subtitle FROM doc_subtitles" +
+                $"WHERE doc_subtitle_id =" +
+                $"(SELECT doc_subtitle_id FROM doc_subtitles_wrong_subtitles" +
+                $"  WHERE wrong_subtitle_id =" +
+                $"(SELECT wrong_subtitle_id FROM wrong_subtitles" +
+                $"WHERE subtitle = '{wrongTitle}'));";
+            try
+            {
+                using (NpgsqlCommand command = new NpgsqlCommand(selectQuery, connection))
+                using (NpgsqlDataReader reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        rightTitle = reader.GetString(0);
+                    }
+                }
+            }
+            catch (PostgresException ex)
+            {
+                Console.WriteLine($"Can't found rightTitle");
+                Console.WriteLine(ex);
+            }
+            return rightTitle;
         }
 
         private string PerfromSelectQuery(string searchTherm, string tableName, string whereParam, string likeParam)
@@ -93,6 +113,9 @@ namespace Rubric_automizer
             if (!String.IsNullOrEmpty(doc_subtitle_id))
             {
                 InsertDataIntoDB("wrong_subtitles", "subtitle", wrongTitle);
+                string wrong_subtitle_id = PerfromSelectQuery("wrong_subtitle_id", "wrong_subtitles", "subtitle", title);
+                InsertDataIntoDB("doc_subtitles_wrong_subtitles",
+                    "doc_subtitle_id, wrong_subtitle_id", $"{doc_subtitle_id}, {wrong_subtitle_id}");
             }
         }
 
@@ -107,16 +130,15 @@ namespace Rubric_automizer
 
         internal void InsertSubtitleObjDB(string tableName, SubtitleObj subtitleObj)
         {
-            var builder = new StringBuilder();
-            builder.AppendFormat(@"INSERT INTO doc_subtitles (index_MDA, title, subtitle)
-            VALUES ('{0}', '{1}', '{2}')", subtitleObj.Index_MDA, subtitleObj.Title, subtitleObj.Subtitle);
+            string insertQuery = $"INSERT INTO doc_subtitles (index_MDA, title, subtitle)" +
+            $"VALUES ('{subtitleObj.Index_MDA}', '{subtitleObj.Title}', '{subtitleObj.Subtitle}')";
 
-            Console.WriteLine(builder.ToString());
+            Console.WriteLine($"INSERT INTO doc_subtitles " +
+                $"INDEX: {subtitleObj.Index_MDA}, TITLE: {subtitleObj.Title}, SUBTITLE: {subtitleObj.Subtitle}");
             try
             {
-                using (NpgsqlCommand command = new NpgsqlCommand(builder.ToString(), connection))
+                using (NpgsqlCommand command = new NpgsqlCommand(insertQuery, connection))
                 {
-                    command.CommandText = builder.ToString();
                     command.ExecuteNonQuery();
                 }
             }
@@ -126,9 +148,13 @@ namespace Rubric_automizer
             }
         }
 
-        internal void InsertDataIntoDB(string tableName, string insertParam, string value)
+        internal void InsertDataIntoDB(string tableName, string insertParam, string value, params string[] oddParams)
         {
             string insertQuery = $"INSERT INTO {tableName} ({insertParam}) VALUES ('{value}')";
+            foreach (string param in oddParams)
+            {
+                insertQuery = insertQuery + param;
+            }
 
             Console.WriteLine(insertQuery);
             try
@@ -177,6 +203,14 @@ namespace Rubric_automizer
                     $"ЗАГОЛОВОК: {subtitleObj.Title} ПОДЗАГОЛОВОК: {subtitleObj.Subtitle}\n");
             }
             return subtitleObj;
+        }
+
+        internal void CreateSpellDictionary(string[] words)
+        {
+            foreach (string word in words)
+            {
+                InsertDataIntoDB("spell_dictionary", "word", word, " ON CONFLICT (word) DO NOTHING;");
+            }
         }
 
         internal string GetIndexMDA(string subtitle)
