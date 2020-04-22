@@ -23,10 +23,23 @@ namespace Rubric_automizer
             }
         }
 
+        internal void DisConnect()
+        {
+            connection.Close();
+        }
+
+        internal void CreateSpellDictionary(string[] words)
+        {
+            foreach (string word in words)
+            {
+                InsertDataIntoDB("spell_dictionary", "word", word);
+            }
+        }
+
         internal string GetAllSubtitles()
         {
             StringBuilder builder = new StringBuilder();
-            Console.WriteLine("Creation of dictionary begins");
+
             string SELECT_ALL_SUBTITLES = "SELECT subtitle FROM doc_subtitles";
             try
             {
@@ -37,7 +50,10 @@ namespace Rubric_automizer
                     {
                         string subtitle = Regex.Replace(reader[0].ToString(), @"[.,\/#!$%\^&\*;:{}=\-_`~()]", " ");
                         subtitle = subtitle.Replace("  ", " ");
-                        builder.Append(subtitle);
+                        if (!String.IsNullOrEmpty(subtitle))
+                        {
+                            builder.Append(subtitle + " ");
+                        }
                     }
                 }
             }
@@ -48,9 +64,47 @@ namespace Rubric_automizer
             return builder.ToString();
         }
 
-        internal void DisConnect()
+        private string PerfromSelectQuery(string searchTherm, string tableName, string whereParam, string likeParam)
         {
-            connection.Close();
+            string result = "";
+            string selectQuery = $"SELECT {searchTherm} FROM {tableName} WHERE LOWER({whereParam}) LIKE LOWER('%{likeParam}%')";
+            try
+            {
+                using (NpgsqlCommand command = new NpgsqlCommand(selectQuery, connection))
+                using (NpgsqlDataReader reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        result = reader.GetString(0);
+                    }
+                }
+            }
+            catch (PostgresException ex)
+            {
+                Console.WriteLine($"Can't found {searchTherm}");
+                Console.WriteLine(ex);
+            }
+            return result;
+        }
+
+        internal void AddWrongTitle(string wrongTitle, string title)
+        {
+            if (!String.IsNullOrEmpty(GetSubtitleID(title)))
+            {
+                string insertQuery = $"INSERT INTO wrong_subtitles (subtitle) VALUES ('{wrongTitle}')";
+                try
+                {
+                    using (NpgsqlCommand command = new NpgsqlCommand(insertQuery, connection))
+                    {
+                        command.ExecuteNonQuery();
+                        Console.WriteLine(insertQuery);
+                    }
+                }
+                catch (PostgresException ex)
+                {
+                    Console.WriteLine(ex);
+                }
+            }
         }
 
         internal void DeleteDataFromDocsDB()
@@ -62,7 +116,7 @@ namespace Rubric_automizer
             }
         }
 
-        internal void InsertDataDB(string tableName, SubtitleObj subtitleObj)
+        internal void InsertSubtitleObjDB(string tableName, SubtitleObj subtitleObj)
         {
             var builder = new StringBuilder();
             builder.AppendFormat(@"INSERT INTO doc_subtitles (index_MDA, title, subtitle)
@@ -83,40 +137,15 @@ namespace Rubric_automizer
             }
         }
 
-        internal string GetIndexMDA(string subtitle)
+        internal void InsertDataIntoDB(string tableName, string insertParam, string data)
         {
+            string insertQuery = $"INSERT INTO {tableName} ({insertParam}) VALUES ('{data}')";
+
+            Console.WriteLine(insertQuery);
             try
             {
-                string selectQuery = $"SELECT index_MDA FROM doc_subtitles WHERE LOWER(subtitle) LIKE LOWER('%{subtitle}%')";
-                using (NpgsqlCommand command = new NpgsqlCommand(selectQuery, connection))
-                using (NpgsqlDataReader reader = command.ExecuteReader())
+                using (NpgsqlCommand command = new NpgsqlCommand(insertQuery, connection))
                 {
-                    while (reader.Read())
-                    {
-                        subtitle = reader.GetString(0);
-                    }
-                }
-            }
-            catch (PostgresException ex)
-            {
-                Console.WriteLine($"Can't found index_MDA where subtitle: {subtitle}");
-                Console.WriteLine(ex);
-            }
-            return subtitle;
-        }
-
-        internal void InsertDataIntoDB(string tableName, string searchTherm, string data)
-        {
-            var builder = new StringBuilder();
-            builder.AppendFormat(@"INSERT INTO {0} ({1})
-            VALUES ('{3}')", tableName, searchTherm, data);
-
-            Console.WriteLine(builder.ToString());
-            try
-            {
-                using (NpgsqlCommand command = new NpgsqlCommand(builder.ToString(), connection))
-                {
-                    command.CommandText = builder.ToString();
                     command.ExecuteNonQuery();
                 }
             }
@@ -126,18 +155,15 @@ namespace Rubric_automizer
             }
         }
 
-        internal bool ExistInDB(string dbName, string searchinTerm, string lastSubtitle)
-        {
-            bool exist = false;
-            return exist;
-        }
-
         internal SubtitleObj GetRightSubtitleObj(SubtitleObj subtitleObj)
         {
             //Console.WriteLine(builder.ToString());
+            string selectQuery = $"SELECT index_MDA, title, subtitle FROM doc_subtitles " +
+                            $"WHERE LOWER (title) LIKE LOWER ('%{subtitleObj.Title}%') " +
+                            $"AND LOWER (subtitle) LIKE LOWER ('%{subtitleObj.Subtitle}%')";
             try
             {
-                using (NpgsqlCommand command = new NpgsqlCommand(SelectQuery(subtitleObj), connection))
+                using (NpgsqlCommand command = new NpgsqlCommand(selectQuery, connection))
                 using (NpgsqlDataReader reader = command.ExecuteReader())
                 {
                     while (reader.Read())
@@ -164,11 +190,14 @@ namespace Rubric_automizer
             return subtitleObj;
         }
 
-        private string SelectQuery(SubtitleObj subtitleObj)
+        internal string GetIndexMDA(string subtitle)
         {
-            return $"SELECT index_MDA, title, subtitle FROM doc_subtitles " +
-                            $"WHERE LOWER (title) LIKE LOWER ('%{subtitleObj.Title}%') " +
-                            $"AND LOWER (subtitle) LIKE LOWER ('%{subtitleObj.Subtitle}%')";
+            return PerfromSelectQuery("index_MDA", "doc_subtitles", "subtitle", subtitle);
+        }
+
+        internal string GetSubtitleID(string title)
+        {
+            return PerfromSelectQuery("doc_subtitle_id", "doc_subtitles", "title", title);
         }
     }
 }
