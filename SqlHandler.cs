@@ -42,7 +42,7 @@ namespace Rubric_automizer
                     {
                         string subtitle = Regex.Replace(reader[0].ToString(), @"[.,\/#!$%\^&\*;:{}=\-_`~–()]", " ");
                         subtitle = subtitle.Replace("  ", " ");
-                        if (!String.IsNullOrEmpty(subtitle))
+                        if (!string.IsNullOrEmpty(subtitle))
                         {
                             builder.Append(subtitle + " ");
                         }
@@ -110,7 +110,7 @@ namespace Rubric_automizer
         internal void AddWrongTitle(string wrongTitle, string title)
         {
             string doc_subtitle_id = PerfromSelectQuery("doc_subtitle_id", "doc_subtitles", "title", title);
-            if (!String.IsNullOrEmpty(doc_subtitle_id))
+            if (!string.IsNullOrEmpty(doc_subtitle_id))
             {
                 InsertDataIntoDB("wrong_subtitles", "subtitle", wrongTitle);
                 string wrong_subtitle_id = PerfromSelectQuery("wrong_subtitle_id", "wrong_subtitles", "subtitle", title);
@@ -142,9 +142,9 @@ namespace Rubric_automizer
                     command.ExecuteNonQuery();
                 }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                System.Console.WriteLine(ex);
+                Console.WriteLine(ex);
             }
         }
 
