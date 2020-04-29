@@ -1,5 +1,6 @@
 ﻿using Npgsql;
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -21,6 +22,30 @@ namespace Rubric_automizer
                 Console.WriteLine($"PostgreSQL version: {version}");
                 command.ExecuteNonQuery();
             }
+        }
+
+        internal List<string> GetSpellDictionary()
+        {
+            List<string> words = new List<string>();
+
+            string SELECT_ALL_SUBTITLES = "SELECT word FROM spell_dictionary";
+            try
+            {
+                using (NpgsqlCommand command = new NpgsqlCommand(SELECT_ALL_SUBTITLES, connection))
+                using (NpgsqlDataReader reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+
+                    {
+                        words.Add(reader.GetString(0));
+                    }
+                }
+            }
+            catch (PostgresException ex)
+            {
+                Console.WriteLine(ex);
+            }
+            return words;
         }
 
         internal void DisConnect()
@@ -56,15 +81,14 @@ namespace Rubric_automizer
             return builder.ToString();
         }
 
-        internal string GetRightTitle(string wrongTitle)
+        internal string GetRightTitleFromWrongDB(string wrongTitle)
         {
             string rightTitle = "";
-            string selectQuery = $"SELECT subtitle FROM doc_subtitles" +
-                $"WHERE doc_subtitle_id =" +
-                $"(SELECT doc_subtitle_id FROM doc_subtitles_wrong_subtitles" +
-                $"  WHERE wrong_subtitle_id =" +
-                $"(SELECT wrong_subtitle_id FROM wrong_subtitles" +
-                $"WHERE subtitle = '{wrongTitle}'));";
+            string selectQuery = $"SELECT subtitle FROM doc_subtitles " +
+                $"WHERE doc_subtitle_id = " +
+                $"(SELECT doc_subtitle_id FROM doc_subtitles_wrong_subtitles " +
+                $"WHERE wrong_subtitle_id = " +
+                $"(SELECT wrong_subtitle_id FROM wrong_subtitles WHERE subtitle = '{wrongTitle}'))";
             try
             {
                 using (NpgsqlCommand command = new NpgsqlCommand(selectQuery, connection))
@@ -78,7 +102,7 @@ namespace Rubric_automizer
             }
             catch (PostgresException ex)
             {
-                Console.WriteLine($"Can't found rightTitle");
+                Console.WriteLine($"Can't found rightTitle in wrong_titles db");
                 Console.WriteLine(ex);
             }
             return rightTitle;
@@ -156,7 +180,7 @@ namespace Rubric_automizer
                 insertQuery = insertQuery + param;
             }
 
-            Console.WriteLine(insertQuery);
+            //Console.WriteLine(insertQuery);
             try
             {
                 using (NpgsqlCommand command = new NpgsqlCommand(insertQuery, connection))
@@ -164,9 +188,9 @@ namespace Rubric_automizer
                     command.ExecuteNonQuery();
                 }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                System.Console.WriteLine(ex);
+                Console.WriteLine(ex);
             }
         }
 
@@ -187,9 +211,9 @@ namespace Rubric_automizer
                         subtitleObj.Title = reader.GetString(1);
                         subtitleObj.Subtitle = reader.GetString(2);
                     }
-                    if (String.IsNullOrEmpty(subtitleObj.Index_MDA) ||
-                        String.IsNullOrEmpty(subtitleObj.Title) ||
-                        String.IsNullOrEmpty(subtitleObj.Subtitle))
+                    if (string.IsNullOrEmpty(subtitleObj.Index_MDA) ||
+                        string.IsNullOrEmpty(subtitleObj.Title) ||
+                        string.IsNullOrEmpty(subtitleObj.Subtitle))
                     {
                         throw new InvalidCastException($"ИНДЕКС МДА: {subtitleObj.Index_MDA} " +
                             $"ЗАГОЛОВОК: {subtitleObj.Title} ПОДЗАГОЛОВОК: {subtitleObj.Subtitle}\n");
