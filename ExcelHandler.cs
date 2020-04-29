@@ -32,7 +32,7 @@ namespace Rubric_automizer
                     for (int columnIndex = 1; columnIndex <= lastColumn; columnIndex++)
                     {
                         text = worksheet.Cells[rowIndex, columnIndex].Text.ToString();
-                        if (String.IsNullOrEmpty(text))
+                        if (string.IsNullOrEmpty(text))
                         {
                             continue;
                         }
@@ -41,7 +41,7 @@ namespace Rubric_automizer
                         {
                             title = worksheet.Cells[rowIndex, columnIndex - 1].Text.ToString();
                             int inc = 1;
-                            while (String.IsNullOrEmpty(title))
+                            while (string.IsNullOrEmpty(title))
                             {
                                 title = worksheet.Cells[rowIndex - inc, columnIndex - 1].Text.ToString();
                                 inc++;

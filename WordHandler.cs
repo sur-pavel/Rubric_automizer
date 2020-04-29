@@ -41,7 +41,7 @@ namespace Rubric_automizer
                         {
                             string pageText = pageRange.Text;
                             string cellText = cell.Range.Text;
-                            System.Console.WriteLine("Text in cell: {0}\n" +
+                            Console.WriteLine("Text in cell: {0}\n" +
                             "Text On Page: {1}\n\n", cellText, pageText);
                             if (cellText.Contains("подзаголовок"))
                             {

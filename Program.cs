@@ -19,7 +19,7 @@ namespace Rubric_automizer
         private static extern bool SetConsoleCtrlHandler(EventHandler handler, bool add);
 
         [DllImport("user32.dll")]
-        public static extern bool ShowWindow(System.IntPtr hWnd, int cmdShow);
+        public static extern bool ShowWindow(IntPtr hWnd, int cmdShow);
 
         private delegate bool EventHandler(CtrlType sig);
 
@@ -67,8 +67,6 @@ namespace Rubric_automizer
             irbisHandler = new IrbisHandler(spellChecker, sqlHandler);
 
             //SaveRubricsToSqlFromExcel();
-            //spellChecker.CreateDictionary();
-
             SaveRubricsToSqlFromIrbis();
 
             try
