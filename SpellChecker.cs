@@ -18,11 +18,20 @@ namespace Rubric_automizer
         public SpellChecker(SqlHandler sqlHandler)
         {
             this.sqlHandler = sqlHandler;
+            List<string> words = sqlHandler.GetSpellDictionary();
+            if (words.Any())
+            {
+                spellDictionary = WordList.CreateFromWords(words);
+            }
+            else
+            {
+                CreateDictionaryFromSubtitles();
+            }
         }
 
-        internal void CreateDictionary()
+        internal void CreateDictionaryFromSubtitles()
         {
-            Console.WriteLine("Creation of spellDictionary begins");
+            Console.WriteLine("Creation of spellDictionary from subtitles begins");
             string[] words = sqlHandler.GetAllSubtitles().Split(' ');
             words = words.Where(val => val != "").ToArray();
             words = words.Where(val => val != " ").ToArray();
@@ -30,7 +39,7 @@ namespace Rubric_automizer
             sqlHandler.CreateSpellDictionary(words);
 
             spellDictionary = WordList.CreateFromWords(words);
-            Console.WriteLine("Creation of spellDictionary ended\n");
+            Console.WriteLine("Creation of spellDictionary from subtitles ended\n");
         }
 
         internal bool CheckByMatch(string subtitle)
@@ -44,11 +53,11 @@ namespace Rubric_automizer
             return negative;
         }
 
-        internal string CleanupStringsInSubObj(string title)
+        internal string CleanupTitle(string title)
         {
             string wrongTitle = title;
-            string rightTitle = sqlHandler.GetRightTitle(wrongTitle);
-            if (String.IsNullOrEmpty(rightTitle))
+            string rightTitle = sqlHandler.GetRightTitleFromWrongDB(wrongTitle);
+            if (string.IsNullOrEmpty(rightTitle))
             {
                 foreach (string wrongWord in wrongTitle.Split(' '))
                 {
@@ -124,8 +133,8 @@ namespace Rubric_automizer
 
         internal SubtitleObj CheckSubtitleObj(SubtitleObj subtitleObj)
         {
-            subtitleObj.Title = CleanupStringsInSubObj(subtitleObj.Title);
-            subtitleObj.Subtitle = CleanupStringsInSubObj(subtitleObj.Subtitle);
+            subtitleObj.Title = CleanupTitle(subtitleObj.Title);
+            subtitleObj.Subtitle = CleanupTitle(subtitleObj.Subtitle);
             return subtitleObj;
         }
     }
