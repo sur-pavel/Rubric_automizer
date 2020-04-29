@@ -1,4 +1,5 @@
-﻿using ManagedClient;
+﻿using DocumentFormat.OpenXml.Drawing.Charts;
+using ManagedClient;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -50,14 +51,16 @@ namespace Rubric_automizer
             {
                 if (mfn > 10) break;
                 IrbisRecord record = client.ReadRecord(mfn);
-                Console.WriteLine($"\nMFN: {mfn}");
+                Console.WriteLine($"MFN: {mfn}");
 
                 foreach (RecordField field606 in record.Fields.GetField("606"))
                 {
                     string fieldText = field606.ToSortedText();
                     fieldText = Regex.Replace(fieldText, @";\s([А-Я])\s; ", "");
                     fieldText = DeleteNotesOfBK(fieldText);
-                    SubtitleObj subtitleObj = new SubtitleObj("", GetSubtitle(fieldText, 2), GetSubtitle(fieldText, 1));
+                    string index_MDA = sqlHandler.GetIndexMDA(fieldText.Split('^')[1].Substring(1));
+                    SubtitleObj subtitleObj = new SubtitleObj(index_MDA, GetSubtitle(fieldText, 2), GetSubtitle(fieldText, 1));
+                    Console.WriteLine($"Из Ирбиса получено ИНДЕКС МДА: {subtitleObj.Index_MDA} ЗАГОЛОВОК: {subtitleObj.Title} ПОДЗАГОЛОВОК: {subtitleObj.Subtitle}");
                     try
                     {
                         subtitleObj = sqlHandler.GetRightSubtitleObj(subtitleObj);
@@ -66,18 +69,19 @@ namespace Rubric_automizer
                     {
                         try
                         {
-                            Console.WriteLine($"\nMFN: {mfn}\n {ex.Message}\nTry to check subtitles.\n");
+                            Console.WriteLine($"Try to check by spellChecker.");
                             subtitleObj = spellChecker.CheckSubtitleObj(subtitleObj);
+                            subtitleObj = sqlHandler.GetRightSubtitleObj(subtitleObj);
                         }
                         catch (InvalidCastException except)
                         {
                             Console.WriteLine($"\nMFN: {mfn}\n {except.Message}");
                         }
                     }
+                    Console.WriteLine($"ИНДЕКС МДА: {subtitleObj.Index_MDA} ЗАГОЛОВОК: {subtitleObj.Title} ПОДЗАГОЛОВОК: {subtitleObj.Subtitle}\n");
                     subtitlesObjs.Add(subtitleObj);
                 }
             }
-
             return subtitlesObjs;
         }
 
@@ -102,7 +106,7 @@ namespace Rubric_automizer
         {
             string subtitle = "";
 
-            if (!String.IsNullOrEmpty(fieldText) && !String.IsNullOrWhiteSpace(fieldText))
+            if (!string.IsNullOrEmpty(fieldText) && !string.IsNullOrWhiteSpace(fieldText))
             {
                 int length;
                 if (fieldText.Contains(" ; "))
